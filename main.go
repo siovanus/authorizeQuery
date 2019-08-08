@@ -3,23 +3,19 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/ontio/ontology/core/states"
-	"os"
-	"strconv"
-
-	"github.com/ontio/ontology/cmd/utils"
-	"github.com/ontio/ontology/common/config"
 	scom "github.com/ontio/ontology/core/store/common"
 	"github.com/ontio/ontology/core/store/ledgerstore"
 	"github.com/ontio/ontology/core/store/leveldbstore"
 	"github.com/ontio/ontology/smartcontract/service/native/governance"
 	nutils "github.com/ontio/ontology/smartcontract/service/native/utils"
+	"os"
 )
 
 func main() {
-	dbDir := utils.GetStoreDirPath(config.DefConfig.Common.DataDir, config.DefConfig.P2PNode.NetworkName)
-	store, err := leveldbstore.NewLevelDBStore(fmt.Sprintf("%s%s%s", dbDir, string(os.PathSeparator), ledgerstore.DBDirState))
+	store, err := leveldbstore.NewLevelDBStore(fmt.Sprintf("%s%s%s", "ont/ontology", string(os.PathSeparator), ledgerstore.DBDirState))
 	if err != nil {
 		fmt.Println("leveldbstore.NewLevelDBStore error: ", err)
 		return
@@ -49,14 +45,12 @@ func main() {
 			fmt.Println("deserialize, deserialize authorizeInfo error: ", err)
 			return
 		}
-		peerPubkey := authorizeInfo.PeerPubkey
-		address := authorizeInfo.Address.ToBase58()
-		value := authorizeInfo.CandidatePos + authorizeInfo.ConsensusPos
-		w.WriteString(peerPubkey)
-		w.WriteString("\t")
-		w.WriteString(address)
-		w.WriteString("\t")
-		w.WriteString(strconv.Itoa(int(value)))
+		r, err := json.Marshal(authorizeInfo)
+		if err != nil {
+			fmt.Println("json.Marshal error: ", err)
+			return
+		}
+		w.WriteString(string(r))
 		w.WriteString("\n")
 	}
 	w.Flush()

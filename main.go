@@ -14,6 +14,17 @@ import (
 	"os"
 )
 
+type Result struct {
+	PeerPubkey           string
+	Address              string
+	ConsensusPos         uint64 //pos deposit in consensus node
+	CandidatePos         uint64 //pos deposit in candidate node
+	NewPos               uint64 //deposit new pos to consensus or candidate node, it will be calculated in next epoch, you can withdrawal it at any time
+	WithdrawConsensusPos uint64 //unAuthorized pos from consensus pos, frozen until next next epoch
+	WithdrawCandidatePos uint64 //unAuthorized pos from candidate pos, frozen until next epoch
+	WithdrawUnfreezePos  uint64 //unfrozen pos, can withdraw at any time
+}
+
 func main() {
 	store, err := leveldbstore.NewLevelDBStore(fmt.Sprintf("%s%s%s", "ont/ontology", string(os.PathSeparator), ledgerstore.DBDirState))
 	if err != nil {
@@ -45,7 +56,17 @@ func main() {
 			fmt.Println("deserialize, deserialize authorizeInfo error: ", err)
 			return
 		}
-		r, err := json.Marshal(authorizeInfo)
+		result := &Result{
+			PeerPubkey:           authorizeInfo.PeerPubkey,
+			Address:              authorizeInfo.Address.ToBase58(),
+			ConsensusPos:         authorizeInfo.ConsensusPos,
+			CandidatePos:         authorizeInfo.CandidatePos,
+			NewPos:               authorizeInfo.NewPos,
+			WithdrawConsensusPos: authorizeInfo.WithdrawConsensusPos,
+			WithdrawCandidatePos: authorizeInfo.WithdrawCandidatePos,
+			WithdrawUnfreezePos:  authorizeInfo.WithdrawUnfreezePos,
+		}
+		r, err := json.Marshal(result)
 		if err != nil {
 			fmt.Println("json.Marshal error: ", err)
 			return
